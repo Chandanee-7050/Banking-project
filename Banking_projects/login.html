@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATM System</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ATM BOX */
+.atm-box {
+  background: #ffffff;
+  width: 360px;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+/* HEADER */
+.header {
+  background: #003366;
+  color: white;
+  text-align: center;
+  padding: 15px;
+}
+
+/* CONTENT */
+.content {
+  padding: 20px;
+}
+
+h3 {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background: #003366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:hover {
+  background: #0055aa;
+}
+
+.switch {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  cursor: pointer;
+  color: #003366;
+}
+
+.message {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.hidden {
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="atm-box">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h2>🏦 ATM SYSTEM</h2>
+  </div>
+
+  <!-- SIGNUP SCREEN -->
+  <div class="content" id="signupScreen">
+    <h3>Create Bank Account</h3>
+
+    <input type="text" id="name" placeholder="Full Name">
+    <input type="text" id="account" placeholder="Account Number">
+    <input type="text" id="card" placeholder="Card Number">
+    <input type="password" id="signupPin" placeholder="Set 4-digit PIN">
+
+    <button onclick="signup()">Create Account</button>
+
+    <div class="switch" onclick="showLogin()">Already have account? ATM Login</div>
+    <div class="message" id="signupMsg"></div>
+  </div>
+
+  <!-- LOGIN SCREEN -->
+  <div class="content hidden" id="loginScreen">
+    <h3>ATM Login</h3>
+
+    <input type="text" id="loginCard" placeholder="Card Number">
+    <input type="password" id="loginPin" placeholder="PIN">
+
+    <button onclick="login()">Login</button>
+
+    <div class="switch" onclick="showSignup()">Create new bank account</div>
+    <div class="message" id="loginMsg"></div>
+  </div>
+
+</div>
+
+<script>
+  function login() {
+  let card = document.getElementById("cardInput").value;
+  let pin = document.getElementById("pinInput").value;
+
+  fetch("http://localhost:8080/api/auth/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ cardNumber: card, pin: pin })
+})
+.then(res => res.json())
+.then(data => {
+  localStorage.setItem("cardNumber", data.cardNumber);
+  window.location.href = "atm-menu.html";
+})
+.catch(err => alert("Login failed"));
+  }
+
+  let cardNumber = ""; // store card number after login
+
+// Call this function after successful login
+function setCardNumber(card) {
+    cardNumber = card;
+}
+
+const BASE_URL = "http://localhost:8080/api"; // Spring Boot base URL
+
+/* SWITCH SCREENS */
+function showLogin() {
+  document.getElementById("signupScreen").classList.add("hidden");
+  document.getElementById("loginScreen").classList.remove("hidden");
+}
+
+function showSignup() {
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("signupScreen").classList.remove("hidden");
+}
+
+/* SIGNUP */
+function signup() {
+  const data = {
+    fullName: document.getElementById("name").value,
+    accountNumber: document.getElementById("account").value,
+    cardNumber: document.getElementById("card").value,
+    pin: document.getElementById("signupPin").value
+  };
+
+  fetch(`${BASE_URL}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.ok ? "Account Created Successfully" : "Signup Failed")
+  .then(msg => document.getElementById("signupMsg").innerText = msg)
+  .catch(() => document.getElementById("signupMsg").innerText = "Server Error");
+}
+
+/* LOGIN */
+function login() {
+
+  const data = {
+    cardNumber: document.getElementById("loginCard").value.trim(),
+    pin: document.getElementById("loginPin").value.trim()
+  };
+
+  fetch(`${BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Invalid Card or PIN");
+    }
+    return response.json();
+  })
+  .then(user => {
+    // ✅ LOGIN SUCCESS
+    document.getElementById("loginMsg").innerText = "Login Successful";
+    document.getElementById("loginMsg").style.color = "green";
+
+    // ✅ STORE USER
+    sessionStorage.setItem("loggedInUser", JSON.stringify(user));
+
+    // ✅ REDIRECT TO ATM PAGE
+    window.location.href = "atm-menu.html";
+  })
+  .catch(error => {
+    // ❌ LOGIN FAILED
+    document.getElementById("loginMsg").innerText = error.message;
+    document.getElementById("loginMsg").style.color = "red";
+  });
+}
+</script>
+
+
+</body>
+</html>

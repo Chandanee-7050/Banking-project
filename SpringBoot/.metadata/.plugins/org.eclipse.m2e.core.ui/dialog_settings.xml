@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="MavenProjectImportWizardPage">
+		<list key="rootDirectory">
+			<item value="C:\Users\singh\Downloads\Banking"/>
+			<item value="C:\Users\singh\Downloads\Management"/>
+			<item value="C:\Users\singh\Downloads\onetomany"/>
+			<item value="C:\Users\singh\Downloads\Student"/>
+			<item value="C:\Users\singh\Downloads\springboot"/>
+			<item value="C:\Users\singh\Downloads\testApplication"/>
+		</list>
+		<list key="projectNameTemplate">
+			<item value="[artifactId]"/>
+			<item value="[artifactId]-TRUNK"/>
+			<item value="[artifactId]-[version]"/>
+			<item value="[groupId].[artifactId]"/>
+			<item value="[groupId].[artifactId]-[version]"/>
+			<item value="[name]"/>
+		</list>
+	</section>
+	<section name="org.eclipse.m2e.core.pom.overview">
+	</section>
+	<section name="org.eclipse.m2e.core.pom.dependencies">
+	</section>
+</section>

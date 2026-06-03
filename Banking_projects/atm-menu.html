@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATM Menu</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #141e30, #243b55);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.atm {
+  background: #ffffff;
+  width: 420px;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.header {
+  background: #003366;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+.screen {
+  padding: 20px;
+}
+
+h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#balanceDiv{
+  margin: 5px;
+}
+#depbtn{
+  margin-bottom: 12px;
+  padding: 7px;
+  background-color: green;
+  border-radius: 3px;
+  border: none;
+  margin-left: 150px;
+  font-weight: bold;
+}
+#depbtn:hover{
+  background-color: #045e02;
+  cursor: pointer;
+}
+
+#winbtn{
+  margin-bottom: 8px;
+  padding: 7px;
+  background-color: green;
+  border-radius: 3px;
+  border: none;
+  margin-left: 150px;
+   font-weight: bold;
+}
+#winbtn:hover{
+    background-color: #045e02;
+    cursor: pointer;
+}
+
+
+
+.menu button {
+  padding: 12px;
+  font-size: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #003366;
+  color: white;
+}
+
+.menu button:hover {
+  background: #0055aa;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.message {
+  margin-top: 15px;
+  text-align: center;
+  font-weight: bold;
+  color: green;
+}
+
+.logout {
+  margin-top: 20px;
+  background: #b00020;
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 3px;
+  border: none;
+  margin-left: 150px;
+   font-weight: bold;
+}
+
+.logout:hover {
+  background: #e00030;
+  cursor: pointer;
+}
+
+#statementTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+#statementTable th, #statementTable td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+  font-size: 13px;
+}
+
+#statementTable th {
+  background: #003366;
+  color: white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="atm">
+  <div class="header">
+    <h2>🏦 ATM MENU</h2>
+  </div>
+
+  <div class="screen">
+    <h3>Choose Transaction</h3>
+
+    <div class="menu">
+      <button onclick="showBalance()">Balance</button>
+      <button onclick="showDeposit()">Deposit</button>
+      <button onclick="showWithdraw()">Withdraw</button>
+      <button onclick="miniStatement()">Mini Statement</button>
+    </div>
+
+    <!-- Balance Display -->
+    <div id="balanceDiv" class="hidden">
+      <h4>Balance: ₹<span id="balanceValue">0</span></h4>
+    </div>
+
+    <!-- Deposit -->
+    <div id="depositDiv" class="hidden">
+      <input type="number" id="depositAmount" placeholder="Enter amount to deposit">
+      <button id="depbtn" onclick="deposit()">Deposit</button>
+    </div>
+
+    <!-- Withdraw -->
+    <div id="withdrawDiv" class="hidden">
+      <input type="number" id="withdrawAmount" placeholder="Enter amount to withdraw">
+      <button id="winbtn" onclick="withdraw()">Withdraw</button>
+    </div>
+
+    <!-- Mini Statement -->
+    <div id="statementDiv" class="hidden">
+      <table id="statementTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Balance After</th>
+          </tr>
+        </thead>
+        <tbody id="statementBody"></tbody>
+      </table>
+    </div>
+
+    <button class="logout" onclick="logout()">Logout</button>
+
+    <div class="message" id="msg"></div>
+  </div>
+</div>
+<script>
+const BASE_URL = "http://localhost:8080/api/atm";
+
+// =====================
+// SESSION CHECK
+// =====================
+const user = JSON.parse(sessionStorage.getItem("loggedInUser"));
+
+if (!user || !user.cardNumber) {
+  alert("Session expired. Please login again.");
+  window.location.href = "atm-frontend.html";
+}
+
+const cardNumber = user.cardNumber.replace(/\s+/g, "");
+
+// =====================
+// HIDE ALL SECTIONS
+// =====================
+function hideAll() {
+  document.getElementById("balanceDiv").classList.add("hidden");
+  document.getElementById("depositDiv").classList.add("hidden");
+  document.getElementById("withdrawDiv").classList.add("hidden");
+  document.getElementById("statementDiv").classList.add("hidden");
+  document.getElementById("msg").innerText = "";
+}
+
+// =====================
+// BALANCE
+// =====================
+function showBalance() {
+  hideAll();
+
+  fetch(`${BASE_URL}/balance/${cardNumber}`)
+    .then(res => res.json())
+    .then(balance => {
+      document.getElementById("balanceValue").innerText = `₹${balance}`;
+      document.getElementById("balanceDiv").classList.remove("hidden");
+    })
+    .catch(() => {
+      document.getElementById("msg").innerText = "Error fetching balance";
+    });
+}
+
+// =====================
+// DEPOSIT
+// =====================
+function showDeposit() {
+  hideAll();
+  document.getElementById("depositDiv").classList.remove("hidden");
+}
+
+function deposit() {
+  const amount = document.getElementById("depositAmount").value;
+
+  if (!amount || amount <= 0) {
+    alert("Enter valid amount");
+    return;
+  }
+
+  fetch(`${BASE_URL}/deposit/${cardNumber}/${amount}`, {
+    method: "POST"
+  })
+  .then(res => res.text())
+  .then(msg => {
+    document.getElementById("msg").innerText = msg;
+    document.getElementById("depositAmount").value = "";
+  })
+  .catch(() => {
+    document.getElementById("msg").innerText = "Deposit failed";
+  });
+}
+
+// =====================
+// WITHDRAW
+// =====================
+function showWithdraw() {
+  hideAll();
+  document.getElementById("withdrawDiv").classList.remove("hidden");
+}
+
+function withdraw() {
+  const amount = document.getElementById("withdrawAmount").value;
+
+  if (!amount || amount <= 0) {
+    alert("Enter valid amount");
+    return;
+  }
+
+  fetch(`${BASE_URL}/withdraw/${cardNumber}/${amount}`, {
+    method: "POST"
+  })
+  .then(res => res.text())
+  .then(msg => {
+    document.getElementById("msg").innerText = msg;
+    document.getElementById("withdrawAmount").value = "";
+  })
+  .catch(() => {
+    document.getElementById("msg").innerText = "Withdrawal failed";
+  });
+}
+
+// =====================
+// MINI STATEMENT
+// =====================
+function miniStatement() {
+  hideAll();
+
+  fetch(`${BASE_URL}/transactions/${cardNumber}`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("statementBody");
+      tbody.innerHTML = "";
+
+      data.slice(-5).reverse().forEach(tx => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${new Date(tx.createdAt).toLocaleString()}</td>
+            <td>${tx.type}</td>
+            <td>₹${tx.amount}</td>
+            <td>₹${tx.balanceAfter}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById("statementDiv").classList.remove("hidden");
+    })
+    .catch(() => {
+      document.getElementById("msg").innerText = "Cannot fetch statement";
+    });
+}
+
+// =====================
+// LOGOUT
+// =====================
+function logout() {
+  sessionStorage.removeItem("loggedInUser");
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>
